@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="CodeMirror/lib/codemirror.css">
     <script src="CodeMirror/mode/javascript/javascript.js"></script>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
 
     <link rel="stylesheet" id="global" href="styles/style.css" type="text/css" media="all">
 
@@ -23,10 +24,29 @@
       <h1>Evan Scarborough's Plotting Challenge</h1>
     </div>
     <div style="height:50px;"></div>
-    <div id="editor"></div>
 
+
+    <div class="panel-container-vertical">
+      <div class="panel-top">
+        <div id="editor"></div>
+      </div>
+      <div class="splitter-horizontal"></div>
+      <div class="panel-bottom" style="padding:20px;">
+        <div class="chart-container">
+          <canvas id="plotArea"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- <div id="editor"></div> -->
+
+
+    <div id="footer">
+      <button onclick="updatePlot()">Generate Plot</button>
+    </div>
 
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="assets/jquery-resizable.js"></script>
     <script src="assets/editor.js"></script>
   </body>
 </html>

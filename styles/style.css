@@ -25,6 +25,87 @@ h1{
   display: inline-block;
 }
 
+
+#editor{
+  height: 100%;
+}
+.CodeMirror{
+  height: 100%;
+}
+
+.splitter-horizontal {
+  flex: 0 0 auto;
+  height: 18px;
+  background: url("../assets/hsizegrip.png") center center no-repeat #443341;
+  cursor: row-resize;
+}
+.panel-top{
+  max-height: 60vh;
+}
+.panel-bottom{
+  /* height: 100%; */
+  background-color: #2b262a;
+  flex-grow : 1;
+  /* flex-flow: column; */
+}
+.chart-container{
+  position: absolute;
+  /* height:99%; */
+  width:100%;
+}
+.chartjs-size-monitor{}
+
+.panel-container-vertical{
+  height: calc(100vh - 100px);;
+  /* max-height: 70vh; */
+  display: flex;
+  flex-flow: column;
+}
+
+
+
+#footer{
+  width: 100vw;
+  height: 50px;
+  position: fixed;
+  bottom:0;
+  left:0;
+  z-index: 20;
+  background-color: #443341;
+  margin: 0;
+}
+button:focus { outline: none; }
+#footer > button{
+  height: 30px;
+  margin-top: 10px;
+  margin-left: 30px;
+  font-family: grilli;
+  font-size: 18px;
+  padding-left: 20px;
+  padding-right: 20px;
+  border-radius: 2px;
+  border: 1px solid #dbc3cc;
+  background-color: inherit;
+  color: #dbc3cc;
+  transition: background-color 0.2s;
+}
+#footer > button:hover{
+  background-color: #683f61;
+}
+#footer > button:disabled{
+  color: rgb(150,150,150);
+  background-color: rgb(200,200,200);
+}
+
+
+
+
+
+
+
+
+
+
 body{
   color: #dbc3cc;
   margin: 0;
