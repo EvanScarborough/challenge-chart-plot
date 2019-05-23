@@ -71,11 +71,25 @@ h1{
   bottom:0;
   left:0;
   z-index: 20;
-  background-color: #443341;
+  background-color: rgb(32,27,31);
   margin: 0;
 }
+#footerFillBar{
+  position: absolute;
+  z-index: 22;
+  width: 100vw;
+  top:0;
+  left:0;
+  background-color: #443341;
+  height: 50px;
+}
+
+#footerButtons{
+  position: absolute;
+  z-index: 23;
+}
 button:focus { outline: none; }
-#footer > button{
+#footerButtons button{
   height: 30px;
   margin-top: 10px;
   margin-left: 30px;
@@ -85,16 +99,16 @@ button:focus { outline: none; }
   padding-right: 20px;
   border-radius: 2px;
   border: 1px solid #dbc3cc;
-  background-color: inherit;
+  background-color: rgba(42,37,41,0);
   color: #dbc3cc;
   transition: background-color 0.2s;
 }
-#footer > button:hover{
-  background-color: #683f61;
+#footerButtons button:hover{
+  background-color: rgba(42,37,41,0.9);
 }
-#footer > button:disabled{
-  color: rgb(150,150,150);
-  background-color: rgb(200,200,200);
+#footerButtons button:disabled{
+  opacity: 0.3;
+  background-color: rgba(42,37,41,0);
 }
 
 

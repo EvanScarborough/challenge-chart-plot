@@ -10,10 +10,14 @@ var warnings = "";
 const POINT_LIMIT = 300;
 const DATA_LIMIT = 20000;
 function warn(w){warnings=warnings+w+'\n';}
+var json = {};
+var eventOn;
+var dataEvents = 0;
 var data = {};
 
 // some handy selectors to cache!
 var $plot = $('#plotArea');
+var $fillBar = $('#footerFillBar');
 var $bottomPanel = $('.panel-bottom');
 var $topPanel = $('.panel-top');
 var $chartContainer = $('.chart-container');
@@ -71,50 +75,57 @@ function updatePlot(){
 
   // now we can parse it!
   warnings = "";
-  var dataCount = 0;
-  var eventType, eventTime;
+  eventOn = 0;
 
   try{
-    var json = JSON.parse(formattedText);
-
-    // use a regular expression to predict the number of data events
-    var dataEvents = (formattedText.match(/\"type\":\s*\"data\"/g) || []).length;
-    console.log(dataEvents);
+    json = JSON.parse(formattedText);
+    eventOn = 0;
+    // use a regular expression to predict the number of events
+    dataEvents = (formattedText.match(/\"type\":\s*\"data\"/g) || []).length;
 
     if(started == false){data={};}
-    // read the events line by line
-    for(var i = 0; i < json.events.length; i++){
-      eventType = json.events[i].type;
-      eventTime = json.events[i].timestamp;
 
-      // here are all of the actual events!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      if(eventType == 'start'){startEvent(json.events[i]);}
-      else if(eventType == 'span'){spanEvent(json.events[i]);}
-      else if(eventType == 'data'){
-        if(typeof eventTime == 'undefined'){warn('Missing timestamp from data! (event '+(i+1)+')');continue;}
-        dataEvent(json.events[i]);
-        dataCount = dataCount + 1;
-        // there is a strict limit of DATA_LIMIT points. Any more and the execution will quit as if it hit a stop event.
-        if(dataCount > DATA_LIMIT){
-          warn('Too many data points! Data events limited to '+DATA_LIMIT+' at a time.');
-          stopEvent(json.events[i]);
-          break;
-        }
-      }
-      else if(eventType == 'stop'){stopEvent(json.events[i]);}
-      else if(eventType == 'test'){jsonEditor.getDoc().setValue(getTestCase(json.events[i].test));updatePlot();return;}
-      else{
-        warn('Unknown event type: ' + eventType + ' (event ' + (i+1) + ')');
-      }
-    }
-
-    if(warnings.length>0){alert("Warnings:\n"+warnings);warnings="";}
-    replotData();
+    // start a batch to read the events line by line
+    processEventBatch();
   }
   catch (e){
     var errorMsg = 'Something went wrong :(\n';
     errorMsg = errorMsg + e.toString();
     alert(errorMsg);
+  }
+}
+
+function processEventBatch(){
+  var count = 10;
+  var eventType, eventTime;
+  // process {count} events
+  for(var i = eventOn; (i < json.events.length) && (count > 0); i++){
+    eventType = json.events[i].type;
+    eventTime = json.events[i].timestamp;
+    eventOn = eventOn+1;
+    count = count-1;
+
+    // here are all of the actual events!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    if(eventType == 'start'){startEvent(json.events[i]);}
+    else if(eventType == 'span'){spanEvent(json.events[i]);}
+    else if(eventType == 'data'){
+      if(typeof eventTime == 'undefined'){warn('Missing timestamp from data! (event '+(i+1)+')');continue;}
+      dataEvent(json.events[i]);
+    }
+    else if(eventType == 'stop'){stopEvent(json.events[i]);}
+    else if(eventType == 'test'){jsonEditor.getDoc().setValue(getTestCase(json.events[i].test));updatePlot();return;}
+    else{
+      warn('Unknown event type: ' + eventType + ' (event ' + (i+1) + ')');
+    }
+  }
+  $fillBar.width((eventOn/json.events.length*100)+'vw');
+  // once you're done, wait a few milliseconds and start another batch
+  if(eventOn < json.events.length){
+    setTimeout(processEventBatch,1);
+  }
+  else{
+    if(warnings.length>0){alert("Warnings:\n"+warnings);warnings="";}
+    replotData();
   }
 }
 
