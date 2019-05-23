@@ -86,6 +86,7 @@ function updatePlot(){
     if(started == false){data={};}
 
     // start a batch to read the events line by line
+    setButtonsDisabled(true);
     processEventBatch();
   }
   catch (e){
@@ -124,6 +125,7 @@ function processEventBatch(){
     setTimeout(processEventBatch,1);
   }
   else{
+    setButtonsDisabled(false);
     if(warnings.length>0){alert("Warnings:\n"+warnings);warnings="";}
     replotData();
   }
@@ -207,7 +209,10 @@ function stopEvent(event){
 
 
 
-
+function setButtonsDisabled(status){
+  $("#plotButton").attr("disabled", status);
+  $("#testButton").attr("disabled", status);
+}
 
 
 // creating the chart
