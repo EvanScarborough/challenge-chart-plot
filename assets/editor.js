@@ -1,30 +1,5 @@
 
 
-
-// setting up the codemirror formatting on the editor.
-// initialize it with some data too.
-var jsonEditor = CodeMirror(document.getElementById('editor'), {
-  value: "{type: 'start', timestamp: 1519780251293, select: ['min_response_time', 'max_response_time'], group: ['os', 'browser']}\n\
-{type: 'span', timestamp: 1519780251293, begin: 1519780251293, end: 1519780260201}\n\
-{type: 'data', timestamp: 1519780251000, os: 'linux', browser: 'chrome', min_response_time: 0.1, max_response_time: 1.3}\n\
-{type: 'stop', timestamp: 1519780251293}",
-  mode:  "javascript",
-  lineNumbers: true,
-  json: true
-});
-
-// some handy selectors to cache!
-var $plot = $('#plotArea');
-var $bottomPanel = $('.panel-bottom');
-var $topPanel = $('.panel-top');
-var $chartContainer = $('.chart-container');
-
-// make the sections resizable
-$topPanel.resizable({
-  handleSelector: ".splitter-horizontal",
-  resizeWidth: false
-});
-
 // some variables we will use
 var span_min = 0;
 var span_max = 0;
@@ -32,15 +7,53 @@ var started = false;
 var groups = [];
 var select = [];
 var warnings = "";
+const POINT_LIMIT = 300;
+const DATA_LIMIT = 20000;
 function warn(w){warnings=warnings+w+'\n';}
 var data = {};
 
+// some handy selectors to cache!
+var $plot = $('#plotArea');
+var $bottomPanel = $('.panel-bottom');
+var $topPanel = $('.panel-top');
+var $chartContainer = $('.chart-container');
+
+
+
+
+
+// setting up the codemirror formatting on the editor.
+// initialize it with some data too.
+var jsonEditor = CodeMirror(document.getElementById('editor'), {
+  value: "{type: 'start', timestamp: 1519780251293, select: ['min_response_time', 'max_response_time'], group: ['os', 'browser']}\n\
+{type: 'span', timestamp: 1519780251293, begin: 1519780251293, end: 1519780260201}\n\
+{type: 'data', timestamp: 1519780251293, os: 'linux', browser: 'chrome', min_response_time: 0.1, max_response_time: 1.3}\n\
+{type: 'data', timestamp: 1519780255824, os: 'linux', browser: 'chrome', min_response_time: 0.2, max_response_time: 1.2}\n\
+{type: 'data', timestamp: 1519780260201, os: 'linux', browser: 'chrome', min_response_time: 0.25, max_response_time: 1}\n\
+{type: 'stop', timestamp: 1519780251293}",
+  mode:  "javascript",
+  lineNumbers: true,
+  json: true
+});
+
+// make the sections resizable
+$topPanel.resizable({
+  handleSelector: ".splitter-horizontal",
+  resizeWidth: false
+});
+
+
+// formats a string for use as a json file
 function formatRawJSON(rawText){
   // first of all, put "" around each word that doesn't have ""
   var formattedText = rawText.replace(/(['"])?([a-z0-9A-Z_]+)(['"])?:/g, '"$2": ');
   // then replace all '' with "" (NOTE: this could be better, it would break any
   // actual ' like if you wanted a plot called "Evan's Data" or whatever)
   formattedText = formattedText.replace(/'/g,'"');
+  // remove comments
+  formattedText = formattedText.replace(/(\/\*[^*]*\*\/)|(\/\/[^\n]*)/g, '');
+  // also remove new lines
+  formattedText = formattedText.replace(/(\r\n|\n|\r)/gm,"");
   // put , between each of the events
   formattedText = formattedText.replace(/}/g,'},');
   // but delete the last ,
@@ -58,11 +71,17 @@ function updatePlot(){
 
   // now we can parse it!
   warnings = "";
-  started = false;
+  var dataCount = 0;
   var eventType, eventTime;
 
   try{
     var json = JSON.parse(formattedText);
+
+    // use a regular expression to predict the number of data events
+    var dataEvents = (formattedText.match(/\"type\":\s*\"data\"/g) || []).length;
+    console.log(dataEvents);
+
+    if(started == false){data={};}
     // read the events line by line
     for(var i = 0; i < json.events.length; i++){
       eventType = json.events[i].type;
@@ -72,10 +91,18 @@ function updatePlot(){
       if(eventType == 'start'){startEvent(json.events[i]);}
       else if(eventType == 'span'){spanEvent(json.events[i]);}
       else if(eventType == 'data'){
-        if(typeof eventTime == 'undefined'){throw('Missing timestamp from data! (event '+(i+1)+')');}
+        if(typeof eventTime == 'undefined'){warn('Missing timestamp from data! (event '+(i+1)+')');continue;}
         dataEvent(json.events[i]);
+        dataCount = dataCount + 1;
+        // there is a strict limit of DATA_LIMIT points. Any more and the execution will quit as if it hit a stop event.
+        if(dataCount > DATA_LIMIT){
+          warn('Too many data points! Data events limited to '+DATA_LIMIT+' at a time.');
+          stopEvent(json.events[i]);
+          break;
+        }
       }
       else if(eventType == 'stop'){stopEvent(json.events[i]);}
+      else if(eventType == 'test'){jsonEditor.getDoc().setValue(getTestCase(json.events[i].test));updatePlot();return;}
       else{
         warn('Unknown event type: ' + eventType + ' (event ' + (i+1) + ')');
       }
@@ -85,7 +112,7 @@ function updatePlot(){
     replotData();
   }
   catch (e){
-    var errorMsg = 'Bad JSON found :(\n';
+    var errorMsg = 'Something went wrong :(\n';
     errorMsg = errorMsg + e.toString();
     alert(errorMsg);
   }
@@ -116,7 +143,7 @@ function startEvent(event){
 function spanEvent(event){
   if(started == false){return;}
   if(typeof event.begin !== 'undefined'){span_min=event.begin;}
-  if(typeof event.end !== 'undefined'){span_min=event.end;}
+  if(typeof event.end !== 'undefined'){span_max=event.end;}
 }
 
 function dataEvent(event){
@@ -206,8 +233,8 @@ var chart = new Chart(document.getElementById('plotArea').getContext('2d'),{
     scales: {
       yAxes: [{
         scaleLabel: {
-          display: true,
-          labelString: 'Y'
+          // display: true,
+          // labelString: 'Y'
         }
       }],
       xAxes: [{
@@ -215,7 +242,7 @@ var chart = new Chart(document.getElementById('plotArea').getContext('2d'),{
           type: 'linear',
           position: 'bottom',
           display: true,
-          labelString: 'X'
+          labelString: 'Timestamp (seconds)'
         }
       }]
     }
@@ -248,16 +275,34 @@ function recurseToDataset(target,depth,nameSoFar){
 function plotDataset(target,name){
   var series = "";
   var point;
+  // as part of the large data protection plan, the number of plotable
+  // data points is limited. To do this without losing too much of the
+  // data's shape, we limit how close one point can be to another.
+  // this limit will be called intervalLimit
+  var intervalLimit = (span_max - span_min) / POINT_LIMIT;
+
   for(var i = 0; i < select.length; i++){
     series = select[i];
     if(typeof target[series] != 'undefined'){
+      // set up the dataset for chart.js
       var dataset = {"showLine": true,"fill":true,"lineTension":0};
       dataset.label = name + " " + series;
       dataset.borderColor = "hsl("+(Math.random()*360)+", 80%, 40%)";
       dataset.data = [];
+
+      var lastTime = span_min - intervalLimit - 1;
+      // for each point, add it to the dataset (if necessary)
       for(var j = 0; j < target[series].length; j++){
         point = target[series][j];
-        dataset.data.push({x:point.time,y:point.value});
+        var time = point.time;
+        // ignore if outside of span
+        if(time < span_min || time > span_max){continue;}
+
+        if(time-lastTime < intervalLimit){continue;}
+        lastTime=time;
+
+        time = (time - span_min) / 1000;
+        dataset.data.push({x:time,y:point.value});
       }
       // console.log(dataset);
       chart.data.datasets.push(dataset);
@@ -282,6 +327,7 @@ function resizeChart(){
 resizeChart();
 $(document).ready(function() {
   $topPanel.height(150);
+  updatePlot();
   // Note, it might not be the best solution to have this on a timer, but I
   // could not for the life of me get the jquery resize event to work!!
   // I do not know why.
