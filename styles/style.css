@@ -21,7 +21,7 @@ h1{
   font-size: 24px;
   padding-left: 10px;
   transform: translateY(-4px);
-  font-family: grilli;
+  font-family: 'Source Sans Pro', sans-serif;
   display: inline-block;
 }
 
@@ -85,6 +85,7 @@ h1{
 }
 
 #footerButtons{
+  width: 100vw;
   position: absolute;
   z-index: 23;
 }
@@ -93,7 +94,7 @@ button:focus { outline: none; }
   height: 30px;
   margin-top: 10px;
   margin-left: 30px;
-  font-family: grilli;
+  font-family: 'Source Sans Pro', sans-serif;
   font-size: 18px;
   padding-left: 20px;
   padding-right: 20px;
@@ -110,10 +111,62 @@ button:focus { outline: none; }
   opacity: 0.3;
   background-color: rgba(42,37,41,0);
 }
+#cancelButton{
+  position: absolute;
+  right: 20px;
+}
+#footerButtons #cancelButton:disabled{
+  opacity: 0;
+  background-color: rgba(42,37,41,0);
+}
 
 
 
-
+#readme{
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  left: 0;
+  top: 0;
+  z-index: 100;
+}
+.dimBack{
+  z-index: 1000;
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  left: 0;
+  top: 0;
+  background-color: black;
+  opacity: 0.5;
+}
+.lightbox{
+  z-index: 1000;
+  position: absolute;
+  width: 80vw;
+  height: 80vh;
+  left: 10vw;
+  top: 10vh;
+  /* padding: 50px; */
+  background-color: #443341;
+  text-align: center;
+}
+.textHolder{
+  display: inline-block;
+  width: 100%;
+  /* margin-top: 50px; */
+  height: 100%;
+  background-color: white;
+  overflow: scroll;
+  text-align: left;
+  color: black;
+}
+.textHolder p{
+  margin: 20px;
+}
+.textHolder h2{
+  margin: 20px;
+}
 
 
 
@@ -123,12 +176,5 @@ button:focus { outline: none; }
 body{
   color: #dbc3cc;
   margin: 0;
-  font-family: grilli;
-}
-
-
-
-@font-face {
-  font-family: grilli;
-  src: url('../fonts/Grilli/GT-Walsheim-Pro-Trial-Medium.otf');
+  font-family: 'Source Sans Pro', sans-serif;
 }

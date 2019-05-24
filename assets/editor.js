@@ -14,6 +14,7 @@ var json = {};
 var eventOn;
 var dataEvents = 0;
 var data = {};
+var flagCancel = false;
 
 // some handy selectors to cache!
 var $plot = $('#plotArea');
@@ -21,7 +22,7 @@ var $fillBar = $('#footerFillBar');
 var $bottomPanel = $('.panel-bottom');
 var $topPanel = $('.panel-top');
 var $chartContainer = $('.chart-container');
-
+var $readme = $('#readme');
 
 
 
@@ -92,12 +93,19 @@ function updatePlot(){
   catch (e){
     var errorMsg = 'Something went wrong :(\n';
     errorMsg = errorMsg + e.toString();
+    setButtonsDisabled(false);
     alert(errorMsg);
   }
 }
 
 function processEventBatch(){
-  var count = 10;
+  if(flagCancel){
+    $fillBar.width('100vw');
+    flagCancel = false;
+    setButtonsDisabled(false);
+    return;
+  }
+  var count = 50;
   var eventType, eventTime;
   // process {count} events
   for(var i = eventOn; (i < json.events.length) && (count > 0); i++){
@@ -123,6 +131,7 @@ function processEventBatch(){
   // once you're done, wait a few milliseconds and start another batch
   if(eventOn < json.events.length){
     setTimeout(processEventBatch,1);
+    replotData();
   }
   else{
     setButtonsDisabled(false);
@@ -207,11 +216,14 @@ function stopEvent(event){
 }
 
 
-
+function cancelProcess(){
+  flagCancel = true;
+}
 
 function setButtonsDisabled(status){
   $("#plotButton").attr("disabled", status);
   $("#testButton").attr("disabled", status);
+  $("#cancelButton").attr("disabled", !status);
 }
 
 
@@ -242,8 +254,10 @@ var chart = new Chart(document.getElementById('plotArea').getContext('2d'),{
     ]
   },
   options: {
+    animation: false,
     maintainAspectRatio: false,
     legend: {
+      display: true,
       position: 'right'
     },
     scales: {
@@ -270,10 +284,13 @@ var chart = new Chart(document.getElementById('plotArea').getContext('2d'),{
 
 
 
-
+var dataSetDrawing = 0;
 function replotData(){
   // console.log(data);
   chart.data.datasets = [];
+  chart.options.scales.xAxes[0].ticks.suggestedMin = 0;
+  chart.options.scales.xAxes[0].ticks.suggestedMax = (span_max - span_min) / 1000;
+  dataSetDrawing = 0;
   recurseToDataset(data,0,"");
   chart.update();
 }
@@ -297,13 +314,21 @@ function plotDataset(target,name){
   // this limit will be called intervalLimit
   var intervalLimit = (span_max - span_min) / POINT_LIMIT;
 
+  if(groups.length > 5){
+    chart.options.legend.display = false;
+  }
+  else{
+    chart.options.legend.display = true;
+  }
+
   for(var i = 0; i < select.length; i++){
     series = select[i];
     if(typeof target[series] != 'undefined'){
       // set up the dataset for chart.js
       var dataset = {"showLine": true,"fill":true,"lineTension":0};
       dataset.label = name + " " + series;
-      dataset.borderColor = "hsl("+(Math.random()*360)+", 80%, 40%)";
+      dataset.borderColor = "hsl("+(40*dataSetDrawing)+", 80%, 40%)";
+      dataSetDrawing++;
       dataset.data = [];
 
       var lastTime = span_min - intervalLimit - 1;
@@ -326,7 +351,12 @@ function plotDataset(target,name){
   }
 }
 
-
+function showReadme(){
+  document.getElementById("readme").style.display = "inherit";
+}
+function hideReadme(){
+  document.getElementById("readme").style.display = "none";
+}
 
 
 var lastHeight = 0;

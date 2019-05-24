@@ -17,6 +17,10 @@
     <link rel="stylesheet" id="global" href="styles/style.css" type="text/css" media="all">
 
     <link rel="shortcut icon" type="image/png" href="favicon.png"/>
+
+    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Source+Code+Pro&display=swap" rel="stylesheet">
+    <!-- NOTE: Using Source Code Pro font messed up the editor's line spacing... Had to abandon it! -->
   </head>
   <body>
     <div id="header">
@@ -45,8 +49,84 @@
       <div id="footerFillBar"></div>
       <div id="footerButtons">
         <button id="plotButton" onclick="updatePlot()">Generate Plot</button>
-        <button id="testButton" onclick="makeTest()">Run Test</button>
+        <button id="testButton" onclick="makeTest()">Tests</button>
+        <button id="readmeButton" onclick="showReadme()">Show Read Me</button>
+        <button disabled="true" id="cancelButton" onclick="cancelProcess()">Cancel</button>
       </div>
+    </div>
+
+
+    <div id="readme" style="display:none;">
+      <div class="dimBack"></div>
+      <div class="lightbox">
+        <div class="textHolder">
+          <h2>Read Me</h2>
+          <h2>Design Choices</h2>
+          <p>
+            I used CodeMirror for the text editor because it looked good (although I couldn't
+            change the font without messing up the cursor location...).<br><br>
+            The plot was done with chart.js, since it is easy to implement (D3 would have
+            been a bit overkill I think).<br><br>
+            I did not use React for this project. I thought that there were not
+            going to be many elements on the screen, so I didn't think it was necessary to
+            use a framework like that. I am using jquery though.
+          </p>
+          <h2>Functionality</h2>
+          <p>
+            The code typed in the text editor is plotted. To do this, the raw string is
+            parsed with JSON.parse(). However, some changes needed to be made to the string.
+            (See the formatRawJSON function in editor.js)<br><br>
+            The data is then processed into a more usable object ('data' in editor.js).
+            This object is designed to have a sub-object for each group, so it's
+            basically a tree of all the groups. Then it has an array for each "select"
+            series.<br><br>
+            I did it this way because it stores the data in one location before plotting
+            it could have just placed the data straight into the plot, but I decided
+            against that because then updating the span later could make it drop data.
+            Also this is a good way to sort the data before plotting.
+            (Also this is just better practice to have the data model separate from the view)
+            It would, however, have made it run faster to skip this layer.
+          </p>
+          <h2>Protecting against huge datasets</h2>
+          <p>
+            There are a few ways that this protects against lots of data. For the most part,
+            however, it lets you input as much data as you want. I could have made it
+            limit the user to 10,000 events or something, but I opted instead to allow this,
+            but just make sure that the screen is never frozen from it.<br><br>
+            The main protection is just the "asynchronous" behavior of loading the data.
+            (It's not actually asynchronous) The list of elements is processed in
+            batches. It will process 50, then pause for a few milliseconds to let the
+            screen update. The bottom bar reports its progress and the plot is updated
+            as it loads, so the user knows it is working even if it takes a long time. Plotting
+            can be canceled too. I believe this makes for a better user experience,
+            even if it could be slower to process the data (we should have the back
+            end doing all the serious data crunching anyway!).<br><br>
+            In addition, the plot is guarded against plotting too many points at once.
+            Each series can have a maximum of POINT_LIMIT points. It divides the span into
+            that many intervals and doesn't plot points that are less than that length
+            apart from each other.
+          </p>
+          <h2>Testing</h2>
+          <p>
+            I added a new event type of "test" that just loads in an entire new section set
+            of data. Click the test button at the bottom and copy in one of the commented tests
+            to the test parameter.<br><br>
+            Many of the tests are focused on creating huge data sets to stress-test the
+            plotting. Some may take a long time to process, but the screen is responsive always.<br><br>
+            Other tests just make sure the basic functionality of the app works.
+          </p>
+          <h2>Conclusion</h2>
+          <p>
+            There are a number of things that could be improved upon, and it could stand to have
+            more tests. I might want to add a way to optionally plot large datasets faster
+            by making the data load straight into the chart. Also the testing interface could
+            be more usable with just buttons to run the tests. But overall it works very well
+            I think!
+          </p>
+        </div>
+        <button id="hidereadmeButton" onclick="hideReadme()">Close</button>
+      </div>
+
     </div>
 
     <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
